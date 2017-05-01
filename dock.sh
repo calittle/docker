@@ -108,21 +108,37 @@ function imagemenu(){
 		*) break;
 	esac	
 }
+function attachvm(){
+	if [ 1$VMNAME = "1" ]
+	  then
+		containermenu;
+	else
+		dialog --title "Confirm" --yesno "Use 'exit' to return to Console. Ready?" 5 55
+                if [ $? = 0 ]
+                  then
+                	# attach or exec? 
+			# To use attach we need need to determine if container was started with a shell. 
+			# exec is easier.
+			docker exec -it ${VMNAME} bash
+		fi	
+	fi
+}
 function containermenu(){
         if [ 1$VMNAME = "1" ]
          then
 		MENUNOTE="No container is currently selected.\nUse List to select a container to manage.\n"
+		listvm
 	 else
 		getContainerState ;
 		MENUNOTE="Selected container: '${VMNAME}'.\nContainer is ${STATE}.\n"
         fi
 
-	dialog --clear  --backtitle "Docker Command Center" --title "[ Container Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 List "Displays a list of containers" Start "Start a Container" Kill "Stop a Container" Pause "Pause a Container" Unpause "Unpause a Container" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
+	dialog --clear  --backtitle "Docker Command Center" --title "[ Container Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Attach "Attach a shell to a running container." List "Displays a list of containers" Start "Start a Container" Kill "Stop a Container" Pause "Pause a Container" Unpause "Unpause a Container" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
 	
 	menuitem=$(<"${INPUT}")
-
-        case $menuitem in
-            List) listvm;;
+        case $menuitem in 
+	    Attach) attachvm;;
+	    List) listvm;;
             Start) startvm;;
             Kill) killvm;;
             Reset) resetvm;;
