@@ -10,7 +10,24 @@ OUTPUT=/tmp/output.sh.$$
 OUTPUT1=/tmp/output1.sh.$$
 
 trap "rm $OUTPUT1; rm $OUTPUT; rm $INPUT; exit" SIGHUP SIGINT SIGTERM
-
+function deleteImage(){
+	if [ $IMAGENAME != "" ]; then
+		dialog --title "Confirm" --yesno "Really delete $IMAGENAME?" 5 55
+                if [ $? = 0 ]
+                  then
+                        docker image rm $IMAGENAME
+                fi
+	fi
+}
+function deleteContainer(){
+	if [ $VMNAME != "" ]; then
+		dialog --title "Confirm" --yesno "Really delete $VMNAME?" 5 55
+                if [ $? = 0 ]
+                  then
+                        docker container rm $VMNAME
+                fi
+	fi
+}
 function killvm(){
         if [ $STATE != "running" ]
           then
@@ -120,11 +137,12 @@ function imagemenu(){
 	else
 		MENUNOTE="Selected image:\n ID:${IMAGENAME}\n Tags:$(docker image inspect ${IMAGENAME} --format {{.RepoTags}})\n\n"
 	fi
-	dialog --clear  --backtitle "Docker Command Center" --title "[ Image Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Start "Start a container from an image" List "Displays a list of images" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
+	dialog --clear  --backtitle "Docker Command Center" --title "[ Image Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Start "Start a container from an image" Delete "Delete image" List "Displays a list of images" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
 	menuitem=$(<"${INPUT}")
 	case $menuitem in
 		List) listimages;;
 		Start) startcontainer;;
+		Delete) deleteImage;;
 		Return) mainmenu;;
 		Exit) break;;
 		*) break;
@@ -155,11 +173,12 @@ function containermenu(){
 		MENUNOTE="Selected container: '${VMNAME}'.\nContainer is ${STATE}.\n"
         fi
 
-	dialog --clear  --backtitle "Docker Command Center" --title "[ Container Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Attach "Attach a shell to a running container." List "Displays a list of containers" Start "Start a Container" Kill "Stop a Container" Pause "Pause a Container" Unpause "Unpause a Container" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
+	dialog --clear  --backtitle "Docker Command Center" --title "[ Container Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Attach "Attach a shell to a running container." List "Displays a list of containers" Start "Start a Container" Delete "Delete a container"  Kill "Stop a Container" Pause "Pause a Container" Unpause "Unpause a Container" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
 	
 	menuitem=$(<"${INPUT}")
         case $menuitem in 
 	    Attach) attachvm;;
+	    Delete) deleteContainer;;
 	    List) listvm;;
             Start) startvm;;
             Kill) killvm;;
