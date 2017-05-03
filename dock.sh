@@ -175,9 +175,15 @@ function listvm(){
         docker ps -f "status=running" --format "{{.ID}} \"{{.Names}}-RUNNING\"" > $OUTPUT
 	docker ps -f "status=paused" --format "{{.ID}} \"{{.Names}}-PAUSED\"" >> $OUTPUT
 	docker ps -f "status=exited" --format "{{.ID}} \"{{.Names}}-EXITED\"" >> $OUTPUT
-	dialog --clear --backtitle "Docker Command Menu" --title "[ Container Control Panel: List Containers ]" --menu "Select a Container to control" 25 75 10 $(<"${OUTPUT}") 2>"${INPUT}"
-        VMNAME=$(<"${INPUT}")
-	containermenu;
+	menuitems=$(<"${OUTPUT}")
+	if [ $menuitems="" ]; then
+		dialog --clear --msgbox "No containers available." 5 55
+		mainmenu
+	else
+		dialog --clear --backtitle "Docker Command Menu" --title "[ Container Control Panel: List Containers ]" --menu "Select a Container to control" 25 75 10 $(<"${OUTPUT}") 2>"${INPUT}"
+        	VMNAME=$(<"${INPUT}")
+		containermenu;
+	fi
 }
 
 while true
