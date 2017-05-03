@@ -86,6 +86,27 @@ function getContainerState(){
 	  STATE=$(docker  inspect --format='{{.State.Status}}' $VMNAME)
 	fi
 }
+function startcontainer(){
+	if [ 1$IMAGENAME = "1" ]; then
+		dialog --backtitle "Docker command Center" --title "Response" --msgbox "You need to pick an image first." 5 75
+		imagemenu
+	fi
+	RUN_CMD=""
+	dialog --backtitle "Docker Command Center" --title "Start Container Options" --checklist "Choose container options:\nYou may be able to select invalid combinations.\nChoose wisely!" 20 70 5 1 Interactive on 2 Detached off 3 Psuedo-TTY on 4 "Add more options" off 2>"${INPUT}"
+	menuitem=$(<"${INPUT}")
+	for item in $menuitem 
+	do
+		case $item in        	
+			1) RUN_CMD+="i" ;;
+			2) RUN_CMD+="d" ;;
+			3) RUN_CMD+="t" ;;
+			4) dialog --inputbox "Enter your run params:" 5 55 $RUN_CMD 2>"${INPUT}"; RUN_CMD=$(<"${INPUT}") ;;
+		esac
+	done	
+		echo Starting container. Use exit to return.
+		echo docker run -${RUN_CMD} $IMAGENAME
+		docker run -${RUN_CMD} $IMAGENAME
+}
 function listimages(){
 	docker images --format '{{.ID}} "{{.Repository}}:{{.Tag}}"' > $OUTPUT
 	dialog --clear --backtitle "Docker Command Center" --title "[ List Images ]" --menu "Select an Image to control" 25 75 10 $(<"${OUTPUT}") 2>"${INPUT}"
@@ -99,10 +120,11 @@ function imagemenu(){
 	else
 		MENUNOTE="Selected image:\n ID:${IMAGENAME}\n Tags:$(docker image inspect ${IMAGENAME} --format {{.RepoTags}})\n\n"
 	fi
-	dialog --clear  --backtitle "Docker Command Center" --title "[ Image Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 List "Displays a list of images" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
+	dialog --clear  --backtitle "Docker Command Center" --title "[ Image Console ]" --menu "${MENUNOTE}Choose a command:" 25 55 10 Start "Start a container from an image" List "Displays a list of images" Return "Return to main menu" Exit "Exit to the shell" 2>"${INPUT}"
 	menuitem=$(<"${INPUT}")
 	case $menuitem in
 		List) listimages;;
+		Start) startcontainer;;
 		Return) mainmenu;;
 		Exit) break;;
 		*) break;
